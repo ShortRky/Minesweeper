@@ -1,5 +1,7 @@
 const GRID_SIZE = 40;
-const MINE_COUNT = 250;
+const NORMAL_MINE_COUNT = 250;
+const TOURNAMENT_MINE_COUNT = 500;
+const TOURNAMENT_TIME_LIMIT = 20 * 60; // 20 minutes in seconds
 
 class Minesweeper {
     constructor() {
@@ -9,6 +11,8 @@ class Minesweeper {
         this.timer = 0;
         this.timerInterval = null;
         this.firstClick = true;
+        this.tournamentMode = false;
+        this.mineCount = NORMAL_MINE_COUNT;
 
         this.initializeGrid();
         this.setupEventListeners();
@@ -41,7 +45,7 @@ class Minesweeper {
 
     placeMines(firstClickRow, firstClickCol) {
         let minesPlaced = 0;
-        while (minesPlaced < MINE_COUNT) {
+        while (minesPlaced < this.mineCount) {
             const row = Math.floor(Math.random() * GRID_SIZE);
             const col = Math.floor(Math.random() * GRID_SIZE);
             
@@ -153,7 +157,16 @@ class Minesweeper {
         for (let i = 0; i < GRID_SIZE; i++) {
             for (let j = 0; j < GRID_SIZE; j++) {
                 const cell = this.grid[i][j];
+                // Check if all non-mine cells are revealed
                 if (!cell.isMine && !cell.isRevealed) {
+                    return false;
+                }
+                // Check if all mines are correctly flagged
+                if (cell.isMine && !cell.isFlagged) {
+                    return false;
+                }
+                // Check if any non-mine cells are flagged
+                if (!cell.isMine && cell.isFlagged) {
                     return false;
                 }
             }
@@ -170,13 +183,27 @@ class Minesweeper {
                 }
             }
         }
-        document.getElementById('mine-count').textContent = `Mines: ${MINE_COUNT - flagCount}`;
+        document.getElementById('mine-count').textContent = `Mines: ${this.mineCount - flagCount}`;
     }
 
     startTimer() {
         this.timerInterval = setInterval(() => {
-            this.timer++;
-            document.getElementById('timer').textContent = `Time: ${this.timer}`;
+            if (this.tournamentMode) {
+                this.timer--;
+                if (this.timer <= 0) {
+                    this.gameOver = true;
+                    this.revealAllMines();
+                    alert('Time\'s up! Tournament failed!');
+                    this.stopTimer();
+                    return;
+                }
+            } else {
+                this.timer++;
+            }
+            const minutes = Math.floor(this.timer / 60);
+            const seconds = this.timer % 60;
+            document.getElementById('timer').textContent = 
+                `Time: ${minutes}:${seconds.toString().padStart(2, '0')}`;
         }, 1000);
     }
 
@@ -207,11 +234,29 @@ class Minesweeper {
 
         document.getElementById('new-game').addEventListener('click', () => {
             this.stopTimer();
-            this.timer = 0;
-            document.getElementById('timer').textContent = 'Time: 0';
+            this.timer = this.tournamentMode ? TOURNAMENT_TIME_LIMIT : 0;
+            const minutes = Math.floor(this.timer / 60);
+            const seconds = this.timer % 60;
+            document.getElementById('timer').textContent = 
+                `Time: ${minutes}:${seconds.toString().padStart(2, '0')}`;
             this.gameOver = false;
             this.firstClick = true;
             this.mineLocations.clear();
+            this.mineCount = this.tournamentMode ? TOURNAMENT_MINE_COUNT : NORMAL_MINE_COUNT;
+            this.initializeGrid();
+            this.updateMineCount();
+        });
+
+        document.getElementById('toggle-mode').addEventListener('click', (e) => {
+            this.tournamentMode = !this.tournamentMode;
+            e.target.classList.toggle('active');
+            this.stopTimer();
+            this.timer = this.tournamentMode ? TOURNAMENT_TIME_LIMIT : 0;
+            const minutes = Math.floor(this.timer / 60);
+            const seconds = this.timer % 60;
+            document.getElementById('timer').textContent = 
+                `Time: ${minutes}:${seconds.toString().padStart(2, '0')}`;
+            this.mineCount = this.tournamentMode ? TOURNAMENT_MINE_COUNT : NORMAL_MINE_COUNT;
             this.initializeGrid();
             this.updateMineCount();
         });

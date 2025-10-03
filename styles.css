@@ -46,7 +46,7 @@ body {
     justify-content: center;
 }
 
-#new-game {
+#new-game, #toggle-mode {
     padding: 10px 20px;
     font-size: 16px;
     cursor: pointer;
@@ -54,11 +54,23 @@ body {
     color: white;
     border: none;
     border-radius: 5px;
-    transition: background 0.3s ease;
+    transition: all 0.3s ease;
 }
 
-#new-game:hover {
+#new-game:hover, #toggle-mode:hover {
     background: #3644d9;
+    transform: scale(1.05);
+}
+
+#toggle-mode.active {
+    background: #ff4757;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(255, 71, 87, 0.4); }
+    70% { box-shadow: 0 0 0 10px rgba(255, 71, 87, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(255, 71, 87, 0); }
 }
 
 #grid {
